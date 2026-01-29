@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Healing Pets</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f6f7fb;
+      text-align: center;
+      color: #444;
+    }
+
+    .screen {
+      display: none;
+      padding: 30px;
+    }
+
+    .active {
+      display: block;
+    }
+
+    h1 {
+      font-size: 26px;
+    }
+
+    button {
+      padding: 12px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 20px;
+      background: #ffd6e8;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #ffbddb;
+    }
+
+    .pets img {
+      width: 120px;
+      margin: 15px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .pets img:hover {
+      transform: scale(1.1);
+    }
+
+    #pet {
+      width: 120px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      transition: left 0.2s linear, top 0.2s linear;
+    }
+
+    .game-area {
+      position: relative;
+      width: 100%;
+      height: 80vh;
+      background: linear-gradient(#e0f7fa, #fff);
+      overflow: hidden;
+    }
+
+    .item {
+      position: absolute;
+      top: -40px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #ffc1cc;
+    }
+
+    .star {
+      background: gold;
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    }
+
+    .heart {
+      background: pink;
+      transform: rotate(-45deg);
+    }
+
+    .heart::before,
+    .heart::after {
+      content: "";
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: pink;
+      border-radius: 50%;
+    }
+
+    .heart::before {
+      top: -20px;
+      left: 0;
+    }
+
+    .heart::after {
+      left: 20px;
+      top: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 1: Mood -->
+  <div class="screen active" id="screen-mood">
+    <h1>How are you feeling today?</h1>
+    <button onclick="setMood('happy')">😊 Happy</button>
+    <button onclick="setMood('okay')">😐 Okay</button>
+    <button onclick="setMood('sad')">😞 Sad</button>
+    <p id="comfort"></p>
+    <br />
+    <button onclick="goTo('screen-pet')">Continue</button>
+  </div>
+
+  <!-- Screen 2: Pet Selection -->
+  <div class="screen" id="screen-pet">
+    <h1>Choose your pet</h1>
+    <div class="pets">
+      <img src="cat1.jpeg" onclick="choosePet(this.src)" alt="pet1" />
+      <img src="cat2.jpeg" onclick="choosePet(this.src)" alt="pet2" />
+      <img src="cat3.jpeg" onclick="choosePet(this.src)" alt="pet3" />
+    </div>
+  </div>
+
+  <!-- Screen 3: Follow Mode -->
+  <div class="screen" id="screen-follow">
+    <h1>Relax Mode</h1>
+    <p>Move your finger or mouse 🌸</p>
+    <div class="game-area" id="follow-area">
+      <img id="pet" />
+    </div>
+    <br />
+    <button onclick="goTo('screen-game')">Go to Game Mode</button>
+  </div>
+
+  <!-- Screen 4: Game -->
+  <div class="screen" id="screen-game">
+    <h1>Healing Collect</h1>
+    <p>Collect bubbles, stars and hearts ✨</p>
+    <p id="score-text">Score: 0</p>
+    <div class="game-area" id="game-area"></div>
+    <br />
+    <button onclick="startGame()">Start</button>
+  </div>
+
+  <audio id="collect-sound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+
+<script>
+  let selectedPet = "";
+
+  function goTo(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function setMood(mood) {
+    const comfort = document.getElementById('comfort');
+    if (mood === 'sad') {
+      comfort.textContent = "It's okay. I'm here with you 💗";
+    } else if (mood === 'okay') {
+      comfort.textContent = "Thanks for sharing. Let's relax together 🌱";
+    } else {
+      comfort.textContent = "I'm glad you're feeling good ✨";
+    }
+  }
+
+  function choosePet(src) {
+    selectedPet = src;
+    document.getElementById('pet').src = src;
+    goTo('screen-follow');
+  }
+
+  // Follow mode
+  const followArea = document.getElementById('follow-area');
+  const pet = document.getElementById('pet');
+
+  followArea.addEventListener('mousemove', e => {
+    pet.style.left = e.offsetX + 'px';
+    pet.style.top = e.offsetY + 'px';
+  });
+
+  followArea.addEventListener('touchmove', e => {
+    const touch = e.touches[0];
+    const rect = followArea.getBoundingClientRect();
+    pet.style.left = (touch.clientX - rect.left) + 'px';
+    pet.style.top = (touch.clientY - rect.top) + 'px';
+  });
+
+  // Game mode
+  function startGame() {
+    const area = document.getElementById('game-area');
+    const scoreText = document.getElementById('score-text');
+    area.innerHTML = '';
+
+    let score = 0;
+    scoreText.textContent = 'Score: 0';
+
+    const player = document.createElement('img');
+    player.src = selectedPet;
+    player.style.width = '80px';
+    player.style.position = 'absolute';
+    player.style.bottom = '10px';
+    player.style.left = '50%';
+    player.style.transform = 'translateX(-50%)';
+    area.appendChild(player);
+
+    document.onmousemove = e => {
+      const rect = area.getBoundingClientRect();
+      player.style.left = (e.clientX - rect.left) + 'px';
+    };
+
+    setInterval(() => {
+      const item = document.createElement('div');
+      const types = ['item', 'item star', 'item heart'];
+      item.className = types[Math.floor(Math.random() * types.length)];
+      item.style.left = Math.random() * (area.offsetWidth - 40) + 'px';
+      area.appendChild(item);
+
+      let y = -40;
+      const fall = setInterval(() => {
+        y += 2;
+        item.style.top = y + 'px';
+
+        const itemRect = item.getBoundingClientRect();
+        const playerRect = player.getBoundingClientRect();
+
+        if (
+          itemRect.left < playerRect.right &&
+          itemRect.right > playerRect.left &&
+          itemRect.top < playerRect.bottom &&
+          itemRect.bottom > playerRect.top
+        ) {
+          score++;
+          scoreText.textContent = 'Score: ' + score;
+          document.getElementById('collect-sound').play();
+          item.remove();
+          clearInterval(fall);
+        }
+
+        if (y > area.offsetHeight) {
+          item.remove();
+          clearInterval(fall);
+        }
+      }, 20);
+    }, 1200);
+  }
+</script>
+
+</body>
+</html>
